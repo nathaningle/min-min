@@ -1,0 +1,27 @@
+name:                min-min
+version:             0.1.0.0
+synopsis:            A minimal JavaScript minifier
+#description:
+#homepage:
+license:             ISC
+author:              Nathan Ingle
+maintainer:          elgni.nahtan@gmail.com
+copyright:           2021 Nathan Ingle
+category:            Text
+
+ghc-options: -Wall -Wcompat -Werror -O2 -Wnoncanonical-monad-instances
+
+dependencies:
+  - base >= 4.7 && < 5
+  - attoparsec
+
+library:
+  source-dirs:      src
+  exposed-modules:
+    - Token
+
+executables:
+  min-min:
+    main:             min-min.hs
+    dependencies:
+      - min-min

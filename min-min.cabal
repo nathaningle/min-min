@@ -1,0 +1,39 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.2.
+--
+-- see: https://github.com/sol/hpack
+
+name:           min-min
+version:        0.1.0.0
+synopsis:       A minimal JavaScript minifier
+category:       Text
+author:         Nathan Ingle
+maintainer:     elgni.nahtan@gmail.com
+copyright:      2021 Nathan Ingle
+license:        ISC
+build-type:     Simple
+
+library
+  exposed-modules:
+      Token
+  other-modules:
+      Paths_min_min
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Werror -O2 -Wnoncanonical-monad-instances
+  build-depends:
+      attoparsec
+    , base >=4.7 && <5
+  default-language: Haskell2010
+
+executable min-min
+  main-is: min-min.hs
+  other-modules:
+      Paths_min_min
+  ghc-options: -Wall -Wcompat -Werror -O2 -Wnoncanonical-monad-instances
+  build-depends:
+      attoparsec
+    , base >=4.7 && <5
+    , min-min
+  default-language: Haskell2010
