@@ -14,6 +14,7 @@ ghc-options: -Wall -Wcompat -Werror -O2 -Wnoncanonical-monad-instances
 dependencies:
   - base >= 4.7 && < 5
   - attoparsec
+  - text
 
 library:
   source-dirs:      src

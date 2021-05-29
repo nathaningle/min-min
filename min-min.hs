@@ -11,6 +11,8 @@ A minimal JavaScript minifier.
 -}
 import           Token
 
+import qualified Data.Text.IO                  as TIO
+
 
 main :: IO ()
-main = hello
+main = print =<< tokenise <$> TIO.getContents
