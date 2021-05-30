@@ -12,15 +12,19 @@ A minimal JavaScript minifier.
 {-# LANGUAGE OverloadedStrings #-}
 module Token where
 
+import           Prelude                 hiding ( takeWhile )
+
 import           Control.Applicative            ( (<|>) )
 import           Data.Attoparsec.Text
-import           Data.Char                      ( isAlphaNum
+import           Data.Char                      ( isAlpha
+                                                , isAlphaNum
                                                 , ord
                                                 )
 import           Data.Functor                   ( ($>) )
 import           Data.IntSet                    ( IntSet )
 import qualified Data.IntSet                   as IntSet
 import           Data.Text                      ( Text )
+import qualified Data.Text                     as T
 
 
 data Token = Whitespace !Text
@@ -28,6 +32,8 @@ data Token = Whitespace !Text
            | Comment !Text
            | IdentifierName !Text
            | Punctuator !Text
+           | RegExLiteral !Text
+           | StringLiteral !Text
            deriving (Eq, Ord, Show)
 
 
@@ -40,6 +46,8 @@ parseToken =
     <|> parseMultiLineComment
     <|> parseEol
     <|> parseWhitespace
+    <|> parseRegExLiteral
+    <|> parseStringLiteral
     <|> parsePunctuator
     <|> parseIdentifierName
 
@@ -173,3 +181,30 @@ parsePunctuator = Punctuator <$> ps
 -- In particular, this fails to handle any tricky Unicode.
 parseIdentifierName :: Parser Token
 parseIdentifierName = IdentifierName <$> takeWhile1 (\c -> isAlphaNum c || c == '$' || c == '_')
+
+
+-- | Used only in 'parseDelEscLit' to avoid boolean blindness.
+data PrevCharInLiteral = Backslash | NotBackslash deriving (Eq, Ord, Show)
+
+-- | Parse a string literal, delimited by a single character, that may contain
+-- characters escaped by a backslash.  The delimiters are included in the
+-- result.
+parseDelEscLit :: Char -> Parser Text
+parseDelEscLit delim =
+  T.cons delim . (flip T.snoc) delim <$> (char delim *> scan NotBackslash go) <* char delim
+ where
+  go :: PrevCharInLiteral -> Char -> Maybe PrevCharInLiteral
+  go Backslash _ = Just NotBackslash
+  go NotBackslash c | c == delim = Nothing
+                    | c == '\\'  = Just Backslash
+                    | otherwise  = Just NotBackslash
+
+
+parseStringLiteral :: Parser Token
+parseStringLiteral = StringLiteral <$> (parseDelEscLit '\'' <|> parseDelEscLit '"')
+
+parseRegExLiteral :: Parser Token
+parseRegExLiteral = (\r f -> RegExLiteral (r <> f)) <$> rePart <*> flagPart
+ where
+  rePart   = parseDelEscLit '/'
+  flagPart = takeWhile isAlpha
