@@ -14,12 +14,20 @@ module Token where
 
 import           Control.Applicative            ( (<|>) )
 import           Data.Attoparsec.Text
-import           Data.Char                      ( isSpace )
+import           Data.Char                      ( isAlphaNum
+                                                , ord
+                                                )
+import           Data.Functor                   ( ($>) )
+import           Data.IntSet                    ( IntSet )
+import qualified Data.IntSet                   as IntSet
 import           Data.Text                      ( Text )
 
 
 data Token = Whitespace !Text
-           | NotWhitespace !Text
+           | EndOfLine
+           | Comment !Text
+           | IdentifierName !Text
+           | Punctuator !Text
            deriving (Eq, Ord, Show)
 
 
@@ -27,10 +35,141 @@ tokenise :: Text -> Either String [Token]
 tokenise = parseOnly (many' parseToken <* endOfInput)
 
 parseToken :: Parser Token
-parseToken = parseWhitespace <|> parseNotWhitespace
+parseToken =
+  parseSingleLineComment
+    <|> parseMultiLineComment
+    <|> parseEol
+    <|> parseWhitespace
+    <|> parsePunctuator
+    <|> parseIdentifierName
 
 parseWhitespace :: Parser Token
-parseWhitespace = Whitespace <$> takeWhile1 isSpace
+parseWhitespace = Whitespace <$> takeWhile1 isEcmaSpace
 
-parseNotWhitespace :: Parser Token
-parseNotWhitespace = NotWhitespace <$> takeWhile1 (not . isSpace)
+
+parseSingleLineComment :: Parser Token
+parseSingleLineComment = Comment . ("//" <>) <$> ("//" *> takeTill isEcmaLineTerminator)
+
+-- | Used only in 'parseMultiLineComment' to avoid boolean blindness.
+data PrevCharInComment = Star | NotStar deriving (Eq, Ord, Show)
+
+parseMultiLineComment :: Parser Token
+parseMultiLineComment = Comment . ("/*" <>) . (<> "/") <$> (("/*" *> scan NotStar go) <* char '/')
+ where
+  go :: PrevCharInComment -> Char -> Maybe PrevCharInComment
+  go Star '/' = Nothing
+  go _    '*' = Just Star
+  go _    _   = Just NotStar
+
+
+-- | Returns 'True' for any character that ECMAscript considers to be white space.
+isEcmaSpace :: Char -> Bool
+isEcmaSpace c = ord c `IntSet.member` ecmaWhiteSpaceCPs
+
+-- | Whitespace characters per the [ECMAscript standard](https://262.ecma-international.org/11.0/#sec-white-space).
+ecmaWhiteSpaceCPs :: IntSet
+ecmaWhiteSpaceCPs = IntSet.fromList
+  [ 0x0009
+  , 0x000b
+  , 0x000c
+  , 0x0020
+  , 0x00a0
+  , 0x1680
+  , 0x2000
+  , 0x2001
+  , 0x2002
+  , 0x2003
+  , 0x2004
+  , 0x2005
+  , 0x2006
+  , 0x2007
+  , 0x2008
+  , 0x2009
+  , 0x200a
+  , 0x202f
+  , 0x205f
+  , 0x3000
+  , 0xfeff
+  ]
+
+parseEol :: Parser Token
+parseEol = ecmaEndOfLine $> EndOfLine
+
+-- | ECMAscript-flavoured 'endOfLine'.
+ecmaEndOfLine :: Parser ()
+ecmaEndOfLine = crlf <|> singleEol
+ where
+  crlf      = "\r\n" $> ()
+  singleEol = satisfy isEcmaLineTerminator $> ()
+
+-- | Returns 'True' for any character that ECMAscript considers to be a line terminator.
+isEcmaLineTerminator :: Char -> Bool
+isEcmaLineTerminator c = ord c `IntSet.member` ecmaLineTerminator
+
+-- | Line terminator code points per the [ECMAscript standard](https://262.ecma-international.org/11.0/#sec-line-terminators).
+ecmaLineTerminator :: IntSet
+ecmaLineTerminator = IntSet.fromList [0x000a, 0x000d, 0x2028, 0x2029]
+
+-- | Punctuators per the [ECMAscript standard](https://262.ecma-international.org/11.0/#sec-punctuators).
+parsePunctuator :: Parser Token
+parsePunctuator = Punctuator <$> ps
+ where
+  ps =
+    "{"
+      <|> "("
+      <|> ")"
+      <|> "["
+      <|> "]"
+      <|> "."
+      <|> "..."
+      <|> ";"
+      <|> ","
+      <|> "<"
+      <|> ">"
+      <|> "<="
+      <|> ">="
+      <|> "=="
+      <|> "!="
+      <|> "==="
+      <|> "!=="
+      <|> "+"
+      <|> "-"
+      <|> "*"
+      <|> "%"
+      <|> "**"
+      <|> "++"
+      <|> "--"
+      <|> "<<"
+      <|> ">>"
+      <|> ">>>"
+      <|> "&"
+      <|> "|"
+      <|> "^"
+      <|> "!"
+      <|> "~"
+      <|> "&&"
+      <|> "||"
+      <|> "??"
+      <|> "?"
+      <|> ":"
+      <|> "="
+      <|> "+="
+      <|> "-="
+      <|> "*="
+      <|> "%="
+      <|> "**="
+      <|> "<<="
+      <|> ">>="
+      <|> ">>>="
+      <|> "&="
+      <|> "|="
+      <|> "^="
+      <|> "=>"
+      <|> "/"
+      <|> "/="
+      <|> "}"
+
+-- | /IdentifierName/ tokens __not strictly__ per the [ECMAscript standard](https://262.ecma-international.org/11.0/#sec-names-and-keywords).
+-- In particular, this fails to handle any tricky Unicode.
+parseIdentifierName :: Parser Token
+parseIdentifierName = IdentifierName <$> takeWhile1 (\c -> isAlphaNum c || c == '$' || c == '_')
