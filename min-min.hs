@@ -11,6 +11,7 @@ A minimal JavaScript minifier.
 -}
 import           Token                          ( tokenise )
 import           Minify                         ( minify
+                                                , renameVars
                                                 , render
                                                 )
 
@@ -21,5 +22,5 @@ main :: IO ()
 main = do
   res <- tokenise <$> TIO.getContents
   case res of
-    Right toks -> TIO.putStrLn $ render $ minify toks
+    Right toks -> TIO.putStrLn $ render $ renameVars $ minify toks
     Left  err  -> putStrLn $ "Parse failed: " ++ err
