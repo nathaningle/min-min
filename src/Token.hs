@@ -12,6 +12,8 @@ A minimal JavaScript minifier.
 {-# LANGUAGE OverloadedStrings #-}
 module Token where
 
+import           NumericLiteral                 ( numericLiteral )
+
 import           Prelude                 hiding ( takeWhile )
 
 import           Control.Applicative            ( (<|>) )
@@ -32,6 +34,7 @@ data Token = Whitespace !Text
            | Comment !Text
            | IdentifierName !Text
            | Punctuator !Text
+           | NumericLiteral !Text
            | RegExLiteral !Text
            | StringLiteral !Text
            deriving (Eq, Ord, Show)
@@ -46,6 +49,7 @@ parseToken =
     <|> parseMultiLineComment
     <|> parseEol
     <|> parseWhitespace
+    <|> parseNumericLiteral
     <|> parseRegExLiteral
     <|> parseStringLiteral
     <|> parsePunctuator
@@ -191,7 +195,7 @@ data PrevCharInLiteral = Backslash | NotBackslash deriving (Eq, Ord, Show)
 -- result.
 parseDelEscLit :: Char -> Parser Text
 parseDelEscLit delim =
-  T.cons delim . (flip T.snoc) delim <$> (char delim *> scan NotBackslash go) <* char delim
+  T.cons delim . flip T.snoc delim <$> (char delim *> scan NotBackslash go) <* char delim
  where
   go :: PrevCharInLiteral -> Char -> Maybe PrevCharInLiteral
   go Backslash _ = Just NotBackslash
@@ -208,3 +212,7 @@ parseRegExLiteral = (\r f -> RegExLiteral (r <> f)) <$> rePart <*> flagPart
  where
   rePart   = parseDelEscLit '/'
   flagPart = takeWhile isAlpha
+
+
+parseNumericLiteral :: Parser Token
+parseNumericLiteral = NumericLiteral <$> numericLiteral

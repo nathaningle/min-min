@@ -16,6 +16,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      NumericLiteral
       Token
   other-modules:
       Paths_min_min
