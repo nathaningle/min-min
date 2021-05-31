@@ -16,6 +16,7 @@ build-type:     Simple
 
 library
   exposed-modules:
+      Minify
       NumericLiteral
       Token
   other-modules:

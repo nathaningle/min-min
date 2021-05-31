@@ -29,7 +29,7 @@ import           Data.Text                      ( Text )
 import qualified Data.Text                     as T
 
 
-data Token = Whitespace !Text
+data Token = Whitespace
            | EndOfLine
            | Comment !Text
            | IdentifierName !Text
@@ -56,7 +56,7 @@ parseToken =
     <|> parseIdentifierName
 
 parseWhitespace :: Parser Token
-parseWhitespace = Whitespace <$> takeWhile1 isEcmaSpace
+parseWhitespace = takeWhile1 isEcmaSpace $> Whitespace
 
 
 parseSingleLineComment :: Parser Token
