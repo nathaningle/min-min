@@ -82,12 +82,9 @@ renameVars' dict (Just old) toks         = IdentifierName old : renameVars' dict
 -- | Generate a new short variable name and insert the mapping from long name
 -- to short name into the dictionary.
 insertNext :: Text -> Map Text Text -> (Text, Map Text Text)
-insertNext varName dict
-  | null dict
-  = ("a", M.insert varName "a" dict)
-  | otherwise
-  = let varName' = nextVarName (maximum (M.elems dict))
-    in  (varName', M.insert varName varName' dict)
+insertNext varName dict | null dict = ("a", M.insert varName "a" dict)
+                        | otherwise = (varName', M.insert varName varName' dict)
+  where varName' = nextVarName (maximum (M.elems dict))
 
 -- | Identify the name that succeeds the given one.
 nextVarName :: Text -> Text
