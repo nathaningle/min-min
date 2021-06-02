@@ -12,6 +12,7 @@ author:         Nathan Ingle
 maintainer:     elgni.nahtan@gmail.com
 copyright:      2021 Nathan Ingle
 license:        ISC
+license-file:   LICENSE
 build-type:     Simple
 
 library
@@ -41,5 +42,25 @@ executable min-min
     , base >=4.7 && <5
     , containers
     , min-min
+    , text
+  default-language: Haskell2010
+
+test-suite test
+  type: exitcode-stdio-1.0
+  main-is: test.hs
+  other-modules:
+      Minify.Test
+      NumericLiteral.Test
+      Paths_min_min
+  hs-source-dirs:
+      test
+  ghc-options: -Wall -Wcompat -Werror -O2 -Wnoncanonical-monad-instances
+  build-depends:
+      attoparsec
+    , base >=4.7 && <5
+    , containers
+    , min-min
+    , tasty
+    , tasty-hunit
     , text
   default-language: Haskell2010

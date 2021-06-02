@@ -29,3 +29,12 @@ executables:
     main:             min-min.hs
     dependencies:
       - min-min
+
+tests:
+  test:
+    source-dirs:      test
+    main:             test.hs
+    dependencies:
+      - min-min
+      - tasty
+      - tasty-hunit
