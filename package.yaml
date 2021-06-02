@@ -23,6 +23,7 @@ library:
     - Minify
     - NumericLiteral
     - Token
+    - Zipper
 
 executables:
   min-min:

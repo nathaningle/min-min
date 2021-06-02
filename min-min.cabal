@@ -20,6 +20,7 @@ library
       Minify
       NumericLiteral
       Token
+      Zipper
   other-modules:
       Paths_min_min
   hs-source-dirs:
@@ -51,6 +52,7 @@ test-suite test
   other-modules:
       Minify.Test
       NumericLiteral.Test
+      Zipper.Test
       Paths_min_min
   hs-source-dirs:
       test

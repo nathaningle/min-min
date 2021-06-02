@@ -11,6 +11,7 @@ Test suite for @min-min@.
 -}
 import qualified Minify.Test
 import qualified NumericLiteral.Test
+import qualified Zipper.Test
 
 import           Test.Tasty                     ( defaultMain
                                                 , testGroup
@@ -21,4 +22,5 @@ main :: IO ()
 main = defaultMain $ testGroup "Tests"
   [ Minify.Test.tests
   , NumericLiteral.Test.tests
+  , Zipper.Test.tests
   ]
